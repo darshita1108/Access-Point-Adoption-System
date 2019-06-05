@@ -7,11 +7,22 @@ const userSchema=new mongoose.Schema({
   	first:String,
   	last:{type:String,trim:true}
   },
-  email:String,
-  phone:Number,
-  address:String,
+  email:{
+    type:String,
+    required:true
+  },
+  phone:{
+    type:Number,
+    required:true
+  },
   unattended_deliveries:Number,
-  gender:String,
+  password:{
+    type:String,
+    required:true
+  },
+  coupon_last:{
+    type:Date
+  }
 
 });
 

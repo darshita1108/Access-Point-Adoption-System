@@ -3,10 +3,7 @@ const Schema=mongoose.Schema;
 
 var couponSchema=new mongoose.Schema({
  code:String,
- discount:{
- 	type:Number,
- 	required:true
- },
+ type:Number,
  creation_date:{
  	type:Date,
  	default:Date.now,
@@ -22,8 +19,8 @@ var couponSchema=new mongoose.Schema({
  	default:false,
  	required:true
  },
- user_email:{
- 	type:String,
+ user_id:{
+ 	type:mongoose.Schema.Types.ObjectId,
  	required:true
  }
 });

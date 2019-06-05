@@ -2,7 +2,6 @@ const mongoose=require('mongoose');
 const Schema=mongoose.Schema;
 
 var orderSchema=new mongoose.Schema({
- order_id:Number,
  email:String,
  status:String
 });

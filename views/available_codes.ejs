@@ -15,34 +15,34 @@ body{
 
 }
 body, html {height: 100%}
-
 </style>
 
 <body >
 <div class="bgimg w3-display-container w3-animate-opacity w3-text-white">
-<br><br><br>
-<h2>The mail is sent.</h2>
-<br>
-<h3>The users are</h3><br>
+<h2>Your codes are:</h2><br>
+<h3>Type 1-5%discount  </h3>
+<h3>Type 2-10%discount  </h3>
+<h3>Type 3-15%discount</h3><br>
 <% for(var i=0;i<result.length;i++){%>
-<form method="post" action="/created" >
+<form method="post" action="/applycode">
    
     <div class="w3-third w3-container w3-margin-bottom" style="padding: 10px">
       <div class="w3-container w3-white" style="padding: 10px">
-       User <%=i+1%>:<br>
-    <input type="text" name="email" value="<%=result[i].email%>"style="width:250px;" disabled>
-   
+    <input type="text" name="code" value="<%=result[i].code%>"style="width:250px;" disabled>
+    <input type="hidden" name="code" value="<%=result[i].code%>">
+    <br>
+    <input type="number" name="type" value="<%=result[i].type%>"style="width:250px;" disabled>
+    <input type="hidden" name="type" value="<%=result[i].type%>">
+    <input type="hidden" name="price" value="<%=price%>">
+    <br>
+    <button type="submit">Use the code</button>
       </div>
     </div>
 
 </form>
 <% } %>
+
   </div>
-</body>
-<script type="text/javascript">
-
-</script>
-</html>
-
+  
 </body>
 </html>

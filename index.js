@@ -3,8 +3,11 @@ const couponCode = require('coupon-code');//generate unique coupon codes
 const Promise = require('bluebird');//bluebird is for promise
 var express=require('express');
 
+
 const v = require('node-input-validator');
-var app=express();
+const app=express();
+
+
 
 app.use('/static',express.static(__dirname + '/public'));
 app.set('view engine', 'ejs')
@@ -12,8 +15,6 @@ app.set('view engine', 'ejs')
 app.get('/coupon',function(req,res){
 	res.render('coupon');
 });
-
-
 
 app.get('/add',function(req,res){
   res.render('addAccessPoint1');
@@ -29,8 +30,10 @@ app.get('/',function(req,res){
  res.render('first');
 });
 app.get('/admin',function(req,res){
-  res.render('admin');
+  res.render('adminlogin');
 });
+
+
 app.get('/adduser',function(req,res){
   res.render('user');
 });
@@ -71,9 +74,23 @@ const {coupons}=require('./models/coupon.js');
 const {geo}=require('./models/geo.js');
 
 var bodyParser = require('body-parser');
+
+
+
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.post('/admin',function(req,res){
+var email=req.body.email;
+var password=req.body.password;
+if(email=='aggarwaldarshita@gmail.com'&&password=='admin123')
+{
+  res.render('admin.ejs');
+}
+else{
+  res.send('not valid credentials');
+}
+});
 app.post('/show',function(req,res){
   console.log(req.body.delivery);
   var r=req.body.delivery;
@@ -90,7 +107,7 @@ else{
   })
 }
 });
-
+///geocoder////
 var NodeGeocoder = require('node-geocoder');
 
 var options = {
@@ -443,19 +460,6 @@ app.post('/search', function (req, response) { // code that will execute in back
   });
 
 
-
-/**app.get('/search',function(req,res){  // home page showed to user as get request
-  // that result show case or code to be shown to user
-  //res.send('arr');
-  //res.redirect('/');
-  console.log(req.body.email);
-  console.log("arr in /search route", arr);
-  res.render('nearestAccess', {
-    arr:arr,
-    email:req.body.email
-  });
-});**/
-
 app.post("/find",function(req,response){
 console.log(req.body.address);
 var lat1=req.body.latitude;
@@ -505,129 +509,14 @@ geocoder.geocode(req.body.address)
     });
  });
 
-
-app.post("/nearby", function(request, response) {
-  console.log(request);
-       var m=request.body.islocker;
-       var address=request.body.address;
-       var delivery=request.body.delivery;
-       var email=request.body.email;
-       console.log(email);
-       lockers.findOne(function(err, data) {
-        var latitude=data.latitude;
-        console.log(latitude);
-       });
-       if(delivery=='locker')
-       {
-       if(m==0)
-       {
-         lockers.find({}, function(err, data) {
-        response.render('nearby.ejs', {
-            address : address,
-            items: data,
-            email:request.body.email,
-            id:request.body.id,
-            price:request.body.price
-        });
-    });
-       }
-       else{
-            response.render('created.ejs',{
-              r:'Not fit for locker!'
-       });
-      }
-    }
-      else{
-        response.render('created.ejs',{
-              r:'Welcome!'
-       });
-      }
- });
-
-
-app.post("/entercode",function(req,res){
-console.log(req.body.price);
-var email=req.body.email;
-var id=req.body.id;
-var price=req.body.price;
-
- coupons.findOne({
-      user_email:req.body.email
-    }).then(coupon=>{
-      if(coupon)
-      {
-        var discount=coupon.discount;
-        var code=coupon.code;
-        var expiry=coupon.expiry_date;
-        var used=coupon.used;
-        res.render("entercode",{
-        code:code,
-        discount:discount,
-        price:price,
-        email:email,
-        expiry:expiry,
-        used:used
-         });
-
-      }
-      else{
-       res.render("created.ejs",{
-        r:'No coupon is there!!'
-       });
-      }
-    });
-
-
-});
-
-app.post("/discount",function(req,res){
-console.log(req);
-var ucode=req.body.usercode;
-var code=req.body.code;
-var price=req.body.price;
-var expiry=req.body.expiry;
-var discount=req.body.discount;
-var used=req.body.used;
-var email=req.body,email;
-var date=new Date();
-expiry=new Date(expiry);
-var flag=0;
-if(expiry>date&&used==false)
-{
-  console.log("gr");
-  flag=1;
-  var d=(discount*price)/100;
-  price=price-d;
-
-}
-else{
-   res.render("created.ejs",{
-    r:'coupon expired'
-  });
-  }
-if(flag==1&&ucode==code&&used==false)
-{
-  var myquery = { used: false };
-  var newvalues = { $set: {used: true } };
-   coupons.updateOne(myquery, newvalues, function(err, res) {
-        if (err) throw err;
-        console.log("1 document updated");
-  });
-   res.render("created.ejs",{
-     r:'price is '+price
-   });
-}
-});
-
-   app.post("/order", function(request, response) {
+   app.post("/adduser", function(request, response) {
        console.log(request.body); 
        var newusers={
        name:{first:request.body.firstname,last:request.body.lastname},
        email:request.body.email,
        phone:request.body.phone,
-       address:request.body.address,
-       unattended_deliveries:0,
-       gender:request.body.gender
+       password:request.body.password,
+       unattended_deliveries:0
     }
  users.findOne({
       email:request.body.email
@@ -644,7 +533,7 @@ if(flag==1&&ucode==code&&used==false)
     });
         items.find({}, function(err, data) {
         // note that data is an array of objects, not a single object!
-        response.render('order.ejs', {
+        response.render('item_list.ejs', {
             email : request.body.email,
             fname:request.body.firstname,
             lname:request.body.lastname,
@@ -653,27 +542,52 @@ if(flag==1&&ucode==code&&used==false)
     });
       });
   
+app.get('/login',function(request,response){
+    response.render('login.ejs');
+});
+
+app.post('/login',function(request,response){
+    var email=request.body.email;
+    var password=request.body.password;
+    console.log(email);
+    console.log(password);
+    users.findOne({
+      email:email
+    }).then(user=>{
+      if(user)
+      {
+        if(password==user.password)
+        {
+          items.find({}, function(err, data) {
+        // note that data is an array of objects, not a single object!
+        response.render('item_list.ejs', {
+            email : request.body.email,
+            fname:request.body.firstname,
+            lname:request.body.lastname,
+            items: data
+            });
+          });
+        }
+        else{
+         response.send('wrong password');
+        }
+      }
+      else{
+        response.send('not a user..sign up first');
+      }
+    });
+});
 app.post("/buy", function(request, response) {
        console.log(request.body); 
        var r='ordered';
        var neworders={
-       order_id:request.body.id,
        email:request.body.email,
        status:r
-    }
-      orders.findOne({
-      email:request.body.email,
-      order_id:request.body.id
-    }).then(order=>{
-      if(order)
-      {
-      }
-      else{
+        }
        new orders(neworders)
         .save()
         .then(console.log('saved'));
-        }
-    });
+
         items.find({}, function(err, data) {
         response.render('buy.ejs', {
             email : request.body.email,
@@ -684,26 +598,18 @@ app.post("/buy", function(request, response) {
             category:request.body.category,
             price:request.body.price
         });
+      });
     });
-  });
+
 
 app.post("/orderstatus", function(request, response) {
        console.log(request.body); 
-      orders.findOne({
-      order_id:request.body.id
-    }).then(order=>{
-      if(order)
-      {
-        console.log(order);
-        console.log(order);
         var myquery = { order_id: request.body.id };
         var newvalues = { $set: {status: request.body.status } };
         orders.updateOne(myquery, newvalues, function(err, res) {
         if (err) throw err;
         console.log("1 document updated");
   });
-      }
-    });
     users.findOne({
       email:request.body.email
     }).then(user=>{
@@ -724,27 +630,14 @@ app.post("/orderstatus", function(request, response) {
     });
   });
 
-app.post("/generate", function(request, response) {
-      var threshold=request.body.threshold;
-      var query = { unattended_deliveries: { $gt: threshold } };
-      users.find(query,function(err, result) {
-      if (err) throw err;
-     console.log(result);
-     response.render('generate.ejs',{
-      result:result
-     });
-  });
-  });
-
-//generating unique coupon codes////
-var count = 0;
-// this is code that checks uniqueness and returns a promise
+//fucntion to check uniqueness of coupons
 function check(code) {
   return new Promise(function(resolve, reject) {
     setTimeout(function() {
     console.log("check"+code);
     coupons.findOne({
       code:code
+
     }).then(coupon=>{
       if (coupon) {
         console.log(code + ' is not unique');
@@ -759,7 +652,7 @@ function check(code) {
 
   });
 }
-
+//fucntion to generate a new coupon
 var generateUniqueCode = Promise.method(function() {
   var code = couponCode.generate({parts:3,partLen:5});
   return check(code)
@@ -771,27 +664,7 @@ var generateUniqueCode = Promise.method(function() {
       }
     });
 });
-
-
-
-app.post('/coupon', function (req, res) {
-  console.log('Moved to add page');
-   var c=req.body.coupon;
-  for(var i=0;i<c;i++)
-  {
-  generateUniqueCode().then(function(code) {
-  new coupons({
-    code:code,
-    user_email:"not added"
-  }).save()
-  .then(console.log('saved'));
-     });
-  }
-  res.render('created.ejs',{
-    r:'done'
-  });
-});
-
+//using nodemailer
 var nodemailer=require('nodemailer');
 var transporter=nodemailer.createTransport({
 service:'gmail',
@@ -801,32 +674,62 @@ auth:{
 }
 });
 
-app.post('/created', function (req, res) {
-  console.log('Moved to add page');
-    coupons.findOne({
-      user_email:req.body.email
-    }).then(coupon=>{
-      if(coupon)
+//coupons will be generated for the users
+//the last coupon date of the user is taken if it is less than the date
+//we are taking then they are included in targetted customers
+//clong with cpupon a mail is send to the users.
+app.post("/generate", function(request, response) {
+      var threshold=request.body.threshold;
+      var query = { unattended_deliveries: { $gt: threshold } };
+      var count=request.body.count;
+
+      users.find(query,function(err, result) {
+      if (err) throw err;
+      console.log(result);
+
+      var m=result.sort(function(a, b){return b.unattended_deliveries - a.unattended_deliveries});
+      for(var i=0;i<m.length;i++)
       {
-        console.log("already has a code");
+        var user_last_coupon=m[i].coupon_last;
+        if(user_last_coupon!=undefined)
+        {
+          user_last_coupon=new Date(user_last_coupon);
+          var last_date=request.body.date;
+          last_date=new Date(last_date);
+          if(user_last_coupon>=last_date)
+          {
+           m.splice(i,1);
+          }
+
+        }
       }
-    else{
-  generateUniqueCode().then(function(code) {
-    console.log("code is");
-    console.log(code);
-  new coupons({
-    code:code,
-    user_email:req.body.email,
-    discount:req.body.discount,
-    expiry_date:req.body.expiry,
-  }).save()
-  .then(console.log('saved'));
-  console.log("hey");
-   var mailOptions={
+      if(m.length>count)
+      {
+        m=m.slice(0,count);
+      }
+      for(var i=0;i<m.length;i++)
+      {
+        var user_last_coupon=m[i].coupon_last;
+        console.log(user_last_coupon);
+        var email=m[i].email;
+        var type=request.body.type;
+        var expiry=request.body.expiry;
+        var used=false;
+        var id=m[i]._id;
+        m[i].coupon_last=new Date();
+        console.log(m);
+        var myquery = { email:email };
+        var newvalues = {coupon_last:new Date()};
+        users.updateOne(myquery, newvalues, function(err, res) {
+        if (err) throw err;
+        console.log("1 document updated");
+  });
+        generateUniqueCode().then(function(code) {
+          var mailOptions={
     from:'aggarwaldarshita@gmail.com',
-    to:req.body.email,
-    subject:'sending email',
-    html: '<p>Your code is</p>'+code
+    to:email,
+    subject:'sending coupon code',
+    html: '<p>Hello,we are prividing you a coupon code to use the lockers.</p>'+'<p>Your code is</p>'+code+'<p>It will expire on </p>'+expiry
    };
    transporter.sendMail(mailOptions,function(err,info){
        if(err){
@@ -837,10 +740,108 @@ app.post('/created', function (req, res) {
 
        }
    });
-     });
-        }
+        new coupons({
+         code:code,
+         user_id:id,
+         expiry_date:expiry,
+         type:type,
+         used:used
+        }).save()
+          .then(console.log('saved'));
       });
-  res.render("created.ejs",{
-    r:'Done!!'
+    
+      }
+      console.log("m"+m);
+      response.render('generate.ejs',{
+      result:m,
+     });
   });
+  });
+
+//all the available codes of the user will be listed
+app.post("/available_codes",function(req,res){
+console.log(req.body.price);
+var email=req.body.email;
+var price=req.body.price;
+var user_id;
+var m=[];
+var query = {email:email};
+
+users.find(query,function(err, result) {
+    m=result;
+  console.log(m[0]._id);
+  var q={user_id:m[0]._id};
+  coupons.find(q,function(err,result){
+    console.log(result);
+    for(var i=0;i<result.length;i++)
+    {
+      console.log(result[i].expiry_date);
+      var expiry=result[i].expiry_date;
+      expiry=new Date(expiry);
+      if(expiry<new Date())
+      {
+        coupons.findOneAndRemove({code: result[i].code}, function(err){
+            if(err)
+              throw err;
+          });
+        result.splice(i,1);
+      }
+    }
+      res.render('available_codes.ejs',{
+        result:result,
+        price:price
+      })
+  
+      });
+    });
+
 });
+
+//user will choose from the available coupons and the expired coupons will be checked
+// the discounted price will be calculated
+
+app.post('/applycode',function(request,response){
+var code=request.body.code;
+var price=request.body.price;
+var type=request.body.type;
+console.log("code"+code);
+console.log(price);
+coupons.findOne({
+      code:code
+    }).then(coupon=>{
+      if(coupon)
+      {
+        var expiry=coupon.expiry_date;
+        expiry=new Date(expiry);
+        var date=new Date();
+        if(expiry>date)
+        {
+          if(type==1)
+          {
+          price=(price)-((0.05)*price);
+          }
+          else if(type==2)
+          {
+         price=(price)-((0.1)*price);
+          }
+          else{
+        price=(price)-((0.15)*price);
+          }
+          coupons.findOneAndRemove({code: code}, function(err){
+            if(err)
+              throw err;
+          });
+          response.render('created.ejs',{
+            r:'Discounted price is '+price
+          });
+
+        }  
+        else{
+          response.render('created.ejs',{
+            r:'Coupon has expired!'
+          });
+        }
+      }
+});
+});
+

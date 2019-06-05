@@ -30,7 +30,23 @@ body, html {height: 100%}
 <form method="post" action="/generate">
   Threshold(min no of unattended deliveries:)<br>
 	<input type="number" name="threshold">
-  <button type="submit">Find!!</button>
+  <br><br>
+  How many customers??<br>
+  <input type="number" name="count">
+  <br><br>
+   The last date upto which coupon provided??<br>
+  <input type="date" name="date">
+  <br><br>
+  Choose a coupon type from 1,2,3
+  <br>Type1(discount of 5%)<br>
+  Type2(discount of 10%)<br>
+  Type3(discount of 15%)<br>
+  <input type="number" name="type">
+  <br><br>
+  Select expiry date of coupon??<br>
+  <input type="date" name="expiry">
+  <br><br>
+  <button type="submit">Generate and send coupon codes to all!!</button>
 </form>
 
   </div>
