@@ -632,39 +632,42 @@ app.post("/orderstatus", function(request, response) {
 
 //fucntion to check uniqueness of coupons
 function check(code) {
-  return new Promise(function(resolve, reject) {
-    setTimeout(function() {
     console.log("check"+code);
     coupons.findOne({
       code:code
-
     }).then(coupon=>{
       if (coupon) {
-        console.log(code + ' is not unique');
-        resolve(false);
+        return false;
       } 
       else {
-        console.log(code + ' is unique');
-        resolve(true);
+        return true;
       }
-    }, 1000);
     });
-
-  });
 }
 //fucntion to generate a new coupon
-var generateUniqueCode = Promise.method(function() {
+//var generateUniqueCode = Promise.method(function() {
+function generateUniqueCode()
+  {
   var code = couponCode.generate({parts:3,partLen:5});
-  return check(code)
-    .then(function(result) {
-      if (result) {
-        return code;//if it is unique then return the code
-      } else {
-        return generateUniqueCode();//else generate a new code 
-      }
+  console.log("fuuuuuu"+code);
+  var flag=0;
+  coupons.findOne({
+      code:code
+    }).then(coupon=>{
+      if (coupon) {
+        flag=1;
+        return generateUniqueCode();
+      } 
     });
-});
-//using nodemailer
+
+    console.log("vvvvvvvvvvv"+flag);
+    if(flag==0)
+    {
+      return code;
+    }
+  
+  }
+
 var nodemailer=require('nodemailer');
 var transporter=nodemailer.createTransport({
 service:'gmail',
@@ -682,12 +685,13 @@ app.post("/generate", function(request, response) {
       var threshold=request.body.threshold;
       var query = { unattended_deliveries: { $gt: threshold } };
       var count=request.body.count;
-
+      var m;
       users.find(query,function(err, result) {
       if (err) throw err;
-      console.log(result);
-
-      var m=result.sort(function(a, b){return b.unattended_deliveries - a.unattended_deliveries});
+      else{
+      m=result;
+      m=m.sort(function(a, b){return b.unattended_deliveries - a.unattended_deliveries});
+      console.log("mmmmm"+m);
       for(var i=0;i<m.length;i++)
       {
         var user_last_coupon=m[i].coupon_last;
@@ -696,40 +700,44 @@ app.post("/generate", function(request, response) {
           user_last_coupon=new Date(user_last_coupon);
           var last_date=request.body.date;
           last_date=new Date(last_date);
-          if(user_last_coupon>=last_date)
+          if(user_last_coupon>last_date)
           {
+            console.log("mmmmmmmmmmmmmmm"+m[i]);
            m.splice(i,1);
           }
 
         }
       }
+      console.log("mmmmmmmmm"+m);
       if(m.length>count)
       {
         m=m.slice(0,count);
       }
+      var id;
+      var newcoupons={
+         user_id:" ",
+         code:" ",
+         expiry_date:request.body.expiry,
+         type:request.body.type,
+         used:false
+             }
       for(var i=0;i<m.length;i++)
       {
-        var user_last_coupon=m[i].coupon_last;
-        console.log(user_last_coupon);
+        var mid=m[i]._id;
+        newcoupons.user_id=m[i]._id;
         var email=m[i].email;
-        var type=request.body.type;
-        var expiry=request.body.expiry;
-        var used=false;
-        var id=m[i]._id;
-        m[i].coupon_last=new Date();
-        console.log(m);
-        var myquery = { email:email };
-        var newvalues = {coupon_last:new Date()};
-        users.updateOne(myquery, newvalues, function(err, res) {
-        if (err) throw err;
-        console.log("1 document updated");
-  });
-        generateUniqueCode().then(function(code) {
-          var mailOptions={
+        console.log("iiiiiiiiiiiiiiiiiiiii"+m[i]._id);
+        var c=generateUniqueCode();
+        newcoupons.code=c;
+        console.log("codeeeeeeeeeeee"+c);
+        new coupons(newcoupons)
+             .save()
+            .then(console.log('saved'));
+           var mailOptions={
     from:'aggarwaldarshita@gmail.com',
     to:email,
     subject:'sending coupon code',
-    html: '<p>Hello,we are prividing you a coupon code to use the lockers.</p>'+'<p>Your code is</p>'+code+'<p>It will expire on </p>'+expiry
+    html: '<p>Hello,we are prividing you a coupon code to use the lockers.</p>'+'<p>Your code is</p>'+c+'<p>It will expire on </p>'+request.body.expiry
    };
    transporter.sendMail(mailOptions,function(err,info){
        if(err){
@@ -737,27 +745,22 @@ app.post("/generate", function(request, response) {
        }
        else{
         console.log('email sent'+info.response);
-
        }
    });
-        new coupons({
-         code:code,
-         user_id:id,
-         expiry_date:expiry,
-         type:type,
-         used:used
-        }).save()
-          .then(console.log('saved'));
-      });
-    
+   console.log("iiiiiiiiii"+m[i]._id);
+        var myquery = { email:email };
+        var newvalues = {coupon_last:new Date()};
+        users.updateOne(myquery, newvalues, function(err, res) {
+        if (err) throw err;
+  });
       }
-      console.log("m"+m);
+  
       response.render('generate.ejs',{
       result:m,
      });
-  });
-  });
-
+    }
+    });
+    });
 //all the available codes of the user will be listed
 app.post("/available_codes",function(req,res){
 console.log(req.body.price);
